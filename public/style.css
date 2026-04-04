@@ -1,0 +1,93 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+#selfId {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.layout {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+
+.panel {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1rem;
+}
+
+#peerList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#peerList li {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+#peerList li:hover {
+  background: #d1d5db;
+}
+
+#peerList li.self {
+  background: #c7d2fe;
+  cursor: default;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+#connStatus {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+#transfers {
+  font-size: 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 60px;
+  background: #f9fafb;
+  white-space: pre-wrap;
+}

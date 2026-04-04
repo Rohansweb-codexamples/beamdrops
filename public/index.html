@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BeamDrop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>BeamDrop</h1>
+    <span id="selfId"></span>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <h2>Devices on this network</h2>
+      <ul id="peerList"></ul>
+      <p class="hint">Click a device to connect.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Connection</h2>
+      <p id="connStatus">Not connected</p>
+      <input type="file" id="fileInput" />
+      <button id="sendFileBtn" disabled>Send file</button>
+
+      <h3>Transfers</h3>
+      <div id="transfers"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
