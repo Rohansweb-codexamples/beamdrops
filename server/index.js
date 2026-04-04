@@ -37,7 +37,6 @@ wss.on("connection", (ws) => {
       return;
     }
 
-    // When a client connects, it sends "hello" with its ID
     if (msg.type === "hello") {
       id = msg.id;
       clients.set(id, ws);
@@ -45,7 +44,6 @@ wss.on("connection", (ws) => {
       return;
     }
 
-    // WebRTC signalling messages
     if (msg.type === "signal" && msg.to && clients.has(msg.to)) {
       const target = clients.get(msg.to);
       target.send(
@@ -66,13 +64,12 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Serve frontend files from /public
+// Serve frontend
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// IMPORTANT: Listen on ALL network interfaces so other devices can connect
+// IMPORTANT: Render requires 0.0.0.0
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`BeamDrop server running on http://0.0.0.0:${PORT}`);
-  console.log(`Open on your network: http://YOUR-IP:${PORT}`);
+  console.log(`BeamDrop server running on port ${PORT}`);
 });
