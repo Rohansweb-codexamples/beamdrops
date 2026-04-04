@@ -13,7 +13,7 @@ body {
 }
 
 .light-theme body {
-  background: #f5f5f5;
+  background: #ffffff;
   color: #111;
 }
 
@@ -160,7 +160,7 @@ button {
   right: -14px;
 }
 
-/* Sparks from top */
+/* Sparks */
 .spark-container {
   position: absolute;
   width: 20px;
@@ -211,6 +211,10 @@ button {
     radial-gradient(circle at center, #0b1220 0, #05070b 60%, #020308 100%);
 }
 
+.light-theme .radar {
+  background: radial-gradient(circle at center, #ffffff 0, #eaeaea 60%, #dcdcdc 100%);
+}
+
 .radar-grid {
   position: absolute;
   inset: 0;
@@ -238,7 +242,7 @@ button {
   to { transform: rotate(360deg); }
 }
 
-/* Device bubbles inside radar */
+/* Device bubbles */
 .device-list {
   list-style: none;
   padding: 0;
@@ -260,6 +264,12 @@ button {
   transform: translate(-50%, -50%);
 }
 
+.light-theme .device-list li {
+  background: #ffffff;
+  border-color: #32ff32;
+  color: #32aa32;
+}
+
 @keyframes float {
   0% { transform: translate(-50%, -50%) translateY(0px); }
   50% { transform: translate(-50%, -50%) translateY(-8px); }
@@ -273,6 +283,11 @@ button {
   padding: 20px;
   border-left: 1px solid #1f242d;
   overflow-y: auto;
+}
+
+.light-theme .side-panel {
+  background: #ffffff;
+  border-left: 1px solid #cccccc;
 }
 
 .username-box {
@@ -291,7 +306,7 @@ button {
 }
 
 .light-theme .username-box input {
-  background: #fff;
+  background: #ffffff;
   color: #000;
 }
 
@@ -303,6 +318,11 @@ button {
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
+}
+
+.light-theme .chat-box {
+  background: #ffffff;
+  border-color: #cccccc;
 }
 
 .chat-messages {
@@ -367,7 +387,7 @@ button {
 }
 
 .light-theme .chat-input input {
-  background: #fff;
+  background: #ffffff;
   color: #000;
 }
 
@@ -377,4 +397,8 @@ button {
   text-decoration: none;
   display: inline-block;
   margin: 4px 0;
+}
+
+.light-theme #transfers a {
+  color: #32aa32;
 }
