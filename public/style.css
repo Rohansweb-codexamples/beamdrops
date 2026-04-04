@@ -12,9 +12,9 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-.light-theme body {
+body.light {
   background: #ffffff;
-  color: #111;
+  color: #000;
 }
 
 .topbar {
@@ -24,6 +24,12 @@ body {
   padding: 14px 20px;
   background: #11141a;
   border-bottom: 1px solid #1f242d;
+  color: white;
+}
+
+body.light .topbar {
+  background: #e0e0e0;
+  color: black;
 }
 
 .logo {
@@ -42,12 +48,6 @@ body {
   box-shadow: 0 0 10px #00ffcc;
 }
 
-.top-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 button {
   background: #00ffcc;
   border: none;
@@ -58,7 +58,7 @@ button {
   color: #000;
 }
 
-.light-theme button {
+body.light button {
   background: #32ff32;
 }
 
@@ -78,7 +78,7 @@ button {
   overflow: hidden;
 }
 
-/* TOWER (CSS art) */
+/* TOWER */
 .tower {
   position: absolute;
   bottom: 5%;
@@ -127,7 +127,6 @@ button {
   background: #555;
   border-radius: 6px;
   transform: translateX(-50%);
-  box-shadow: 0 0 6px #000;
 }
 
 .tower-top {
@@ -207,11 +206,10 @@ button {
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 20px #00ffcc33;
-  background:
-    radial-gradient(circle at center, #0b1220 0, #05070b 60%, #020308 100%);
+  background: radial-gradient(circle at center, #0b1220 0, #05070b 60%, #020308 100%);
 }
 
-.light-theme .radar {
+body.light .radar {
   background: radial-gradient(circle at center, #ffffff 0, #eaeaea 60%, #dcdcdc 100%);
 }
 
@@ -234,7 +232,6 @@ button {
     rgba(0, 255, 204, 0) 60deg
   );
   animation: sweep 3s linear infinite;
-  mix-blend-mode: screen;
 }
 
 @keyframes sweep {
@@ -264,7 +261,7 @@ button {
   transform: translate(-50%, -50%);
 }
 
-.light-theme .device-list li {
+body.light .device-list li {
   background: #ffffff;
   border-color: #32ff32;
   color: #32aa32;
@@ -285,7 +282,7 @@ button {
   overflow-y: auto;
 }
 
-.light-theme .side-panel {
+body.light .side-panel {
   background: #ffffff;
   border-left: 1px solid #cccccc;
 }
@@ -305,7 +302,7 @@ button {
   color: #e5e7eb;
 }
 
-.light-theme .username-box input {
+body.light .username-box input {
   background: #ffffff;
   color: #000;
 }
@@ -320,7 +317,7 @@ button {
   margin-bottom: 20px;
 }
 
-.light-theme .chat-box {
+body.light .chat-box {
   background: #ffffff;
   border-color: #cccccc;
 }
@@ -360,11 +357,11 @@ button {
   align-self: center;
 }
 
-.light-theme .chat-you {
+body.light .chat-you {
   background: #32ff32;
 }
 
-.light-theme .chat-peer {
+body.light .chat-peer {
   background: #00aa00;
 }
 
@@ -386,7 +383,7 @@ button {
   color: #e5e7eb;
 }
 
-.light-theme .chat-input input {
+body.light .chat-input input {
   background: #ffffff;
   color: #000;
 }
@@ -399,6 +396,6 @@ button {
   margin: 4px 0;
 }
 
-.light-theme #transfers a {
+body.light #transfers a {
   color: #32aa32;
 }
