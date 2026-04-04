@@ -1,93 +1,157 @@
-* {
-  box-sizing: border-box;
-}
-
+/* GLOBAL */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f3f4f6;
-  color: #111827;
+  background: #0d0f14;
+  color: #e5e7eb;
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 20px;
+  background: #11141a;
+  border-bottom: 1px solid #1f242d;
 }
 
-.topbar h1 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-
-#selfId {
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-.layout {
+.logo {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
-.panel {
-  flex: 1;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.radar-dot {
+  width: 14px;
+  height: 14px;
+  background: #00ffcc;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ffcc;
 }
 
-h2 {
-  margin-top: 0;
-  font-size: 1rem;
+/* MAIN LAYOUT */
+.main-area {
+  display: flex;
+  height: calc(100vh - 60px);
 }
 
-#peerList {
+/* RADAR AREA */
+.radar-area {
+  flex: 2;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.radar {
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 2px solid #1a1f27;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 20px #00ffcc33;
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(
+    rgba(0, 255, 204, 0.3),
+    rgba(0, 255, 204, 0) 60deg
+  );
+  animation: sweep 3s linear infinite;
+}
+
+@keyframes sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* DEVICE BUBBLES */
+.device-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-#peerList li {
-  padding: 8px 10px;
-  margin-bottom: 6px;
+.device-list li {
+  position: absolute;
+  background: #1a1f27;
+  padding: 10px 18px;
   border-radius: 999px;
-  background: #e5e7eb;
+  border: 1px solid #00ffcc55;
+  color: #00ffcc;
   cursor: pointer;
+  animation: float 4s ease-in-out infinite;
   font-size: 0.9rem;
 }
 
-#peerList li:hover {
-  background: #d1d5db;
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
 }
 
-#peerList li.self {
-  background: #c7d2fe;
-  cursor: default;
+/* SIDE PANEL */
+.side-panel {
+  flex: 1;
+  background: #11141a;
+  padding: 20px;
+  border-left: 1px solid #1f242d;
+  overflow-y: auto;
 }
 
-.hint {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin-top: 8px;
-}
-
-#connStatus {
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-}
-
-#transfers {
-  font-size: 0.85rem;
-  border: 1px solid #e5e7eb;
+.chat-box {
+  background: #0f1217;
+  border: 1px solid #1f242d;
   border-radius: 8px;
-  padding: 8px;
-  min-height: 60px;
-  background: #f9fafb;
-  white-space: pre-wrap;
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #1f242d;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  background: #0d0f14;
+  border: none;
+  color: #e5e7eb;
+}
+
+.chat-input button {
+  padding: 10px 16px;
+  background: #00ffcc;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#sendFileBtn {
+  margin-top: 10px;
+  padding: 10px;
+  background: #00ffcc;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-weight: 600;
 }
