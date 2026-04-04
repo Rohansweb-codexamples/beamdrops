@@ -25,9 +25,10 @@ let currentPeerId = null;
 let pc = null;
 let dataChannel = null;
 
-/* ---------------- SPARKS ---------------- */
+/* -------- Sparks from tower top -------- */
 function spawnSpark() {
   const container = document.querySelector(".spark-container");
+  if (!container) return;
   const spark = document.createElement("div");
   spark.className = "spark";
 
@@ -39,7 +40,7 @@ function spawnSpark() {
 }
 setInterval(spawnSpark, 120);
 
-/* ---------------- FAVICON ---------------- */
+/* -------- Animated favicon -------- */
 function updateFavicon() {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
@@ -55,7 +56,7 @@ function updateFavicon() {
 }
 setInterval(updateFavicon, 120);
 
-/* ---------------- UI HELPERS ---------------- */
+/* -------- UI helpers -------- */
 function addChatMessage(text, who = "peer") {
   const div = document.createElement("div");
   div.className = `chat-line chat-${who}`;
@@ -68,7 +69,7 @@ function setStatus(text) {
   connStatusEl.textContent = text;
 }
 
-/* ---------------- WEBSOCKET ---------------- */
+/* -------- WebSocket signalling -------- */
 function connectWS() {
   const wsUrl =
     location.protocol === "https:"
@@ -98,19 +99,22 @@ function connectWS() {
 function renderPeers() {
   peerListEl.innerHTML = "";
 
-  const radarRect = document.querySelector(".radar").getBoundingClientRect();
+  const radarWrap = document.querySelector(".radar-wrap");
+  const rect = radarWrap.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const radius = rect.width / 2 - 40;
 
   peers.forEach((id, index) => {
     const li = document.createElement("li");
     li.textContent = id === selfId ? "You" : id.slice(0, 6);
 
-    const radius = radarRect.width / 2 - 40;
     const angle = (index / Math.max(peers.length, 1)) * Math.PI * 2;
-    const cx = radarRect.width / 2;
-    const cy = radarRect.height / 2;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
 
-    li.style.left = `${cx + Math.cos(angle) * radius}px`;
-    li.style.top = `${cy + Math.sin(angle) * radius}px`;
+    li.style.left = `${x}px`;
+    li.style.top = `${y}px`;
 
     if (id !== selfId) {
       li.onclick = () => startConnection(id);
@@ -120,7 +124,7 @@ function renderPeers() {
   });
 }
 
-/* ---------------- WEBRTC ---------------- */
+/* -------- WebRTC -------- */
 function createPeerConnection(isCaller, remoteId) {
   currentPeerId = remoteId;
 
@@ -138,6 +142,7 @@ function createPeerConnection(isCaller, remoteId) {
     if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
       setStatus("Disconnected");
       sendFileBtn.disabled = true;
+      addChatMessage("Connection lost", "system");
     }
   };
 
@@ -156,7 +161,7 @@ function setupDataChannel() {
   dataChannel.onopen = () => {
     setStatus(`Connected to ${currentPeerId}`);
     sendFileBtn.disabled = false;
-    addChatMessage("Connected", "you");
+    addChatMessage("Connected", "system");
   };
 
   dataChannel.onclose = () => {
@@ -220,7 +225,7 @@ async function handleSignal(from, data) {
   }
 }
 
-/* ---------------- FILE TRANSFER ---------------- */
+/* -------- File transfer -------- */
 sendFileBtn.onclick = () => {
   const file = fileInput.files[0];
   if (!file || !dataChannel || dataChannel.readyState !== "open") return;
@@ -263,7 +268,7 @@ function receiveFile(name, size) {
   };
 }
 
-/* ---------------- CHAT ---------------- */
+/* -------- Chat -------- */
 sendMsgBtn.onclick = () => {
   const text = chatTextEl.value.trim();
   if (!text || !dataChannel || dataChannel.readyState !== "open") return;
@@ -279,16 +284,16 @@ chatTextEl.onkeydown = (e) => {
   if (e.key === "Enter") sendMsgBtn.click();
 };
 
-/* ---------------- USERNAME ---------------- */
+/* -------- Username -------- */
 setNameBtn.onclick = () => {
   username = usernameInput.value.trim() || autoNames[Math.floor(Math.random() * autoNames.length)];
   addChatMessage(`You are now: ${username}`, "system");
 };
 
-/* ---------------- THEME ---------------- */
+/* -------- Theme toggle -------- */
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light-theme");
 };
 
-/* ---------------- START ---------------- */
+/* -------- Start -------- */
 connectWS();
