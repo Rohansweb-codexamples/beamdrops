@@ -25,35 +25,43 @@ function setStatus(text) {
 }
 
 function connectWS() {
-  console.log("[WS] connecting to", `ws://${location.host}`);
-  ws = new WebSocket(`ws://${location.host}`);
+  const wsUrl =
+    location.protocol === "https:"
+      ? `wss://${location.host}`
+      : `ws://${location.host}`;
+
+  console.log("[WS] connecting to", wsUrl);
+  ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
     console.log("[WS] open");
     ws.send(JSON.stringify({ type: "hello", id: selfId }));
   };
 
-  ws.onmessage = async (event) => {
-    console.log("[WS] message:", event.data);
-    const msg = JSON.parse(event.data);
-    if (msg.type === "peers") {
-      peers = msg.peers;
-      console.log("[WS] peers list:", peers);
-      renderPeers();
-    } else if (msg.type === "signal") {
-      console.log("[WS] signal from", msg.from, msg.data.type);
-      await handleSignal(msg.from, msg.data);
-    }
-  };
-
   ws.onerror = (err) => {
     console.error("[WS] error:", err);
-    setStatus("Signalling error");
+    setStatus("WebSocket error");
   };
 
   ws.onclose = () => {
     console.log("[WS] closed");
-    setStatus("Signalling disconnected");
+    setStatus("WebSocket closed");
+  };
+
+  ws.onmessage = async (event) => {
+    console.log("[WS] message:", event.data);
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === "peers") {
+      peers = msg.peers;
+      console.log("[WS] peers:", peers);
+      renderPeers();
+    }
+
+    if (msg.type === "signal") {
+      console.log("[WS] signal from", msg.from, msg.data.type);
+      await handleSignal(msg.from, msg.data);
+    }
   };
 }
 
@@ -62,18 +70,20 @@ function renderPeers() {
   peers.forEach((id) => {
     const li = document.createElement("li");
     li.textContent = id === selfId ? `${id} (you)` : id;
+
     if (id === selfId) {
       li.classList.add("self");
     } else {
       li.onclick = () => startConnection(id);
     }
+
     peerListEl.appendChild(li);
   });
 }
 
 function createPeerConnection(isCaller, remoteId) {
   currentPeerId = remoteId;
-  console.log("[RTC] creating peer connection, caller:", isCaller, "remote:", remoteId);
+  console.log("[RTC] createPeerConnection caller:", isCaller);
 
   pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -91,7 +101,7 @@ function createPeerConnection(isCaller, remoteId) {
   };
 
   pc.ondatachannel = (event) => {
-    console.log("[RTC] datachannel received");
+    console.log("[RTC] received datachannel");
     dataChannel = event.channel;
     setupDataChannel();
   };
@@ -119,16 +129,16 @@ function setupDataChannel() {
   dataChannel.onmessage = async (event) => {
     if (typeof event.data === "string") {
       try {
-        const { type, name, size } = JSON.parse(event.data);
-        if (type === "file-meta") {
-          logTransfer(`Incoming file: ${name} (${size} bytes)`);
-          receiveFile(name, size);
+        const meta = JSON.parse(event.data);
+        if (meta.type === "file-meta") {
+          logTransfer(`Incoming file: ${meta.name} (${meta.size} bytes)`);
+          receiveFile(meta.name, meta.size);
         }
-      } catch (e) {
-        console.warn("[DC] text message not JSON:", event.data);
+      } catch {
+        console.warn("[DC] non‑JSON text:", event.data);
       }
     } else {
-      console.warn("[DC] unexpected binary without meta");
+      console.warn("[DC] unexpected binary without metadata");
     }
   };
 }
@@ -144,29 +154,38 @@ async function startConnection(remoteId) {
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
+
   sendSignal(remoteId, { type: "offer", sdp: offer });
 }
 
 async function handleSignal(from, data) {
   if (data.type === "offer") {
-    setStatus(`Incoming connection from ${from}`);
+    console.log("[RTC] received offer");
     createPeerConnection(false, from);
+
     await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
+
     sendSignal(from, { type: "answer", sdp: answer });
-  } else if (data.type === "answer") {
+  }
+
+  if (data.type === "answer") {
+    console.log("[RTC] received answer");
     await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-  } else if (data.type === "candidate") {
+  }
+
+  if (data.type === "candidate") {
+    console.log("[RTC] received ICE candidate");
     try {
       await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
     } catch (e) {
-      console.error("[RTC] addIceCandidate error:", e);
+      console.error("[RTC] ICE error:", e);
     }
   }
 }
 
-// --- File sending (simple, no chunking) ---
+// --- File sending ---
 sendFileBtn.addEventListener("click", () => {
   const file = fileInput.files[0];
   if (!file || !dataChannel || dataChannel.readyState !== "open") return;
@@ -177,52 +196,50 @@ sendFileBtn.addEventListener("click", () => {
 
   const reader = new FileReader();
   reader.onload = () => {
-    const arrayBuffer = reader.result;
-    dataChannel.send(arrayBuffer);
+    dataChannel.send(reader.result);
     logTransfer(`Sent file: ${file.name} (${file.size} bytes)`);
   };
   reader.readAsArrayBuffer(file);
 });
 
 function receiveFile(name, size) {
-  let receivedBuffers = [];
-  let receivedBytes = 0;
+  let received = [];
+  let bytes = 0;
 
   dataChannel.onmessage = (event) => {
-    if (typeof event.data === "string") {
-      return;
-    }
-    receivedBuffers.push(event.data);
-    receivedBytes += event.data.byteLength;
+    if (typeof event.data === "string") return;
 
-    if (receivedBytes >= size) {
-      const blob = new Blob(receivedBuffers);
+    received.push(event.data);
+    bytes += event.data.byteLength;
+
+    if (bytes >= size) {
+      const blob = new Blob(received);
       const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = name;
       a.textContent = `Download ${name}`;
-      logTransfer(`Received file: ${name} (${size} bytes)`);
+
       transfersEl.appendChild(a);
       transfersEl.appendChild(document.createElement("br"));
 
-      // restore handler for meta messages
-      dataChannel.onmessage = async (event2) => {
+      logTransfer(`Received file: ${name} (${size} bytes)`);
+
+      // restore handler
+      dataChannel.onmessage = (event2) => {
         if (typeof event2.data === "string") {
           try {
-            const { type, name: n2, size: s2 } = JSON.parse(event2.data);
-            if (type === "file-meta") {
-              logTransfer(`Incoming file: ${n2} (${s2} bytes)`);
-              receiveFile(n2, s2);
+            const meta = JSON.parse(event2.data);
+            if (meta.type === "file-meta") {
+              receiveFile(meta.name, meta.size);
             }
-          } catch (e) {
-            console.warn("[DC] text message not JSON:", event2.data);
-          }
+          } catch {}
         }
       };
     }
   };
 }
 
-// initial connect
+// Start WebSocket
 connectWS();
