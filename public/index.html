@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>BeamDrop</title>
+  <link id="favicon" rel="icon" type="image/png" href="">
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
   <header class="topbar">
@@ -12,39 +14,56 @@
       <div class="radar-dot"></div>
       <span>BeamDrop</span>
     </div>
-    <span id="selfId"></span>
+
+    <div class="top-right">
+      <span id="selfId"></span>
+      <button id="themeToggle">Theme</button>
+    </div>
   </header>
 
   <main class="main-area">
 
-    <!-- Radar + Devices -->
+    <!-- Radar + Sparks -->
     <section class="radar-area">
+      <div class="tower"></div>
+      <div class="spark-container"></div>
+
       <div class="radar">
         <div class="radar-sweep"></div>
       </div>
+
       <ul id="peerList" class="device-list"></ul>
     </section>
 
-    <!-- Chat + File -->
+    <!-- Side Panel -->
     <section class="side-panel">
+
+      <h2>Identity</h2>
+      <div class="username-box">
+        <input id="usernameInput" placeholder="Enter name…" />
+        <button id="setNameBtn">Set</button>
+      </div>
+
       <h2>Connection</h2>
       <p id="connStatus">Not connected</p>
 
+      <h2>Chat</h2>
       <div class="chat-box">
         <div id="chatMessages" class="chat-messages"></div>
 
         <div class="chat-input">
-          <input id="chatText" type="text" placeholder="Type a message..." />
+          <input id="chatText" type="text" placeholder="Type a message…" />
           <button id="sendMsgBtn">Send</button>
         </div>
       </div>
 
-      <h3>Send File</h3>
+      <h2>Send File</h2>
       <input type="file" id="fileInput" />
-      <button id="sendFileBtn" disabled>Send file</button>
+      <button id="sendFileBtn" disabled>Send File</button>
 
-      <h3>Transfers</h3>
+      <h2>Transfers</h2>
       <div id="transfers"></div>
+
     </section>
 
   </main>
