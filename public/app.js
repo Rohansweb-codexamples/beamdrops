@@ -7,9 +7,17 @@ const transfersEl = document.getElementById("transfers");
 const chatMessagesEl = document.getElementById("chatMessages");
 const chatTextEl = document.getElementById("chatText");
 const sendMsgBtn = document.getElementById("sendMsgBtn");
+const usernameInput = document.getElementById("usernameInput");
+const setNameBtn = document.getElementById("setNameBtn");
 
 const selfId = crypto.randomUUID();
-selfIdEl.textContent = `Your ID: ${selfId}`;
+selfIdEl.textContent = `ID: ${selfId.slice(0, 6)}`;
+
+let username = "User-" + selfId.slice(0, 4);
+const autoNames = [
+  "Buzzing Bee", "Electric Falcon", "Neon Sparrow",
+  "Silent Thunder", "Blue Comet", "Pixel Ghost"
+];
 
 let ws;
 let peers = [];
@@ -17,23 +25,50 @@ let currentPeerId = null;
 let pc = null;
 let dataChannel = null;
 
-function logTransfer(msg) {
-  transfersEl.textContent += msg + "\n";
-  transfersEl.scrollTop = transfersEl.scrollHeight;
+/* ---------------- SPARKS ---------------- */
+function spawnSpark() {
+  const container = document.querySelector(".spark-container");
+  const spark = document.createElement("div");
+  spark.className = "spark";
+
+  spark.style.setProperty("--dx", (Math.random() - 0.5) * 200);
+  spark.style.setProperty("--dy", (Math.random() - 0.5) * 200);
+
+  container.appendChild(spark);
+  setTimeout(() => spark.remove(), 800);
+}
+setInterval(spawnSpark, 120);
+
+/* ---------------- FAVICON ---------------- */
+function updateFavicon() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#00ffcc";
+  ctx.beginPath();
+  ctx.arc(32, 32, 20 + Math.sin(Date.now() / 200) * 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  document.getElementById("favicon").href = canvas.toDataURL();
+}
+setInterval(updateFavicon, 120);
+
+/* ---------------- UI HELPERS ---------------- */
+function addChatMessage(text, who = "peer") {
+  const div = document.createElement("div");
+  div.className = `chat-line chat-${who}`;
+  div.textContent = text;
+  chatMessagesEl.appendChild(div);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
 function setStatus(text) {
   connStatusEl.textContent = text;
 }
 
-function addChatMessage(text, from = "system") {
-  const div = document.createElement("div");
-  div.className = `chat-line chat-${from}`;
-  div.textContent = text;
-  chatMessagesEl.appendChild(div);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-
+/* ---------------- WEBSOCKET ---------------- */
 function connectWS() {
   const wsUrl =
     location.protocol === "https:"
@@ -44,14 +79,6 @@ function connectWS() {
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: "hello", id: selfId }));
-  };
-
-  ws.onerror = () => {
-    setStatus("WebSocket error");
-  };
-
-  ws.onclose = () => {
-    setStatus("WebSocket closed");
   };
 
   ws.onmessage = async (event) => {
@@ -71,28 +98,21 @@ function connectWS() {
 function renderPeers() {
   peerListEl.innerHTML = "";
 
-  const radarRect = document
-    .querySelector(".radar")
-    .getBoundingClientRect();
+  const radarRect = document.querySelector(".radar").getBoundingClientRect();
 
   peers.forEach((id, index) => {
     const li = document.createElement("li");
     li.textContent = id === selfId ? "You" : id.slice(0, 6);
 
-    // random-ish position inside radar bounds
     const radius = radarRect.width / 2 - 40;
     const angle = (index / Math.max(peers.length, 1)) * Math.PI * 2;
     const cx = radarRect.width / 2;
     const cy = radarRect.height / 2;
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius;
 
-    li.style.left = `${x}px`;
-    li.style.top = `${y}px`;
+    li.style.left = `${cx + Math.cos(angle) * radius}px`;
+    li.style.top = `${cy + Math.sin(angle) * radius}px`;
 
-    if (id === selfId) {
-      li.classList.add("self");
-    } else {
+    if (id !== selfId) {
       li.onclick = () => startConnection(id);
     }
 
@@ -100,6 +120,7 @@ function renderPeers() {
   });
 }
 
+/* ---------------- WEBRTC ---------------- */
 function createPeerConnection(isCaller, remoteId) {
   currentPeerId = remoteId;
 
@@ -135,7 +156,7 @@ function setupDataChannel() {
   dataChannel.onopen = () => {
     setStatus(`Connected to ${currentPeerId}`);
     sendFileBtn.disabled = false;
-    addChatMessage("Connected", "system");
+    addChatMessage("Connected", "you");
   };
 
   dataChannel.onclose = () => {
@@ -150,18 +171,16 @@ function setupDataChannel() {
         const msg = JSON.parse(event.data);
 
         if (msg.type === "chat") {
-          addChatMessage(`Peer: ${msg.text}`, "peer");
+          addChatMessage(`${msg.from}: ${msg.text}`, "peer");
           return;
         }
 
         if (msg.type === "file-meta") {
-          logTransfer(`Incoming file: ${msg.name} (${msg.size} bytes)`);
           receiveFile(msg.name, msg.size);
           return;
         }
       } catch {
-        // plain text
-        addChatMessage(`Peer: ${event.data}`, "peer");
+        addChatMessage(event.data, "peer");
       }
     }
   };
@@ -197,28 +216,24 @@ async function handleSignal(from, data) {
   if (data.type === "candidate") {
     try {
       await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    } catch (e) {
-      console.error("ICE error:", e);
-    }
+    } catch {}
   }
 }
 
-// file sending
-sendFileBtn.addEventListener("click", () => {
+/* ---------------- FILE TRANSFER ---------------- */
+sendFileBtn.onclick = () => {
   const file = fileInput.files[0];
   if (!file || !dataChannel || dataChannel.readyState !== "open") return;
 
-  dataChannel.send(
-    JSON.stringify({ type: "file-meta", name: file.name, size: file.size })
-  );
+  dataChannel.send(JSON.stringify({ type: "file-meta", name: file.name, size: file.size }));
 
   const reader = new FileReader();
   reader.onload = () => {
     dataChannel.send(reader.result);
-    logTransfer(`Sent file: ${file.name} (${file.size} bytes)`);
+    addChatMessage(`You sent: ${file.name}`, "you");
   };
   reader.readAsArrayBuffer(file);
-});
+};
 
 function receiveFile(name, size) {
   let received = [];
@@ -234,6 +249,8 @@ function receiveFile(name, size) {
       const blob = new Blob(received);
       const url = URL.createObjectURL(blob);
 
+      addChatMessage(`📄 ${name} (download below)`, "peer");
+
       const a = document.createElement("a");
       a.href = url;
       a.download = name;
@@ -241,48 +258,37 @@ function receiveFile(name, size) {
       transfersEl.appendChild(a);
       transfersEl.appendChild(document.createElement("br"));
 
-      logTransfer(`Received file: ${name} (${size} bytes)`);
-
-      // restore handler for meta + chat
-      dataChannel.onmessage = (event2) => {
-        if (typeof event2.data === "string") {
-          try {
-            const msg = JSON.parse(event2.data);
-
-            if (msg.type === "chat") {
-              addChatMessage(`Peer: ${msg.text}`, "peer");
-              return;
-            }
-
-            if (msg.type === "file-meta") {
-              logTransfer(`Incoming file: ${msg.name} (${msg.size} bytes)`);
-              receiveFile(msg.name, msg.size);
-              return;
-            }
-          } catch {
-            addChatMessage(`Peer: ${event2.data}`, "peer");
-          }
-        }
-      };
+      setupDataChannel();
     }
   };
 }
 
-// chat sending
-sendMsgBtn.addEventListener("click", () => {
+/* ---------------- CHAT ---------------- */
+sendMsgBtn.onclick = () => {
   const text = chatTextEl.value.trim();
   if (!text || !dataChannel || dataChannel.readyState !== "open") return;
 
-  dataChannel.send(JSON.stringify({ type: "chat", text }));
+  const msg = { type: "chat", text, from: username };
+  dataChannel.send(JSON.stringify(msg));
+
   addChatMessage(`You: ${text}`, "you");
   chatTextEl.value = "";
-});
+};
 
-chatTextEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    sendMsgBtn.click();
-  }
-});
+chatTextEl.onkeydown = (e) => {
+  if (e.key === "Enter") sendMsgBtn.click();
+};
 
-// start
+/* ---------------- USERNAME ---------------- */
+setNameBtn.onclick = () => {
+  username = usernameInput.value.trim() || autoNames[Math.floor(Math.random() * autoNames.length)];
+  addChatMessage(`You are now: ${username}`, "system");
+};
+
+/* ---------------- THEME ---------------- */
+document.getElementById("themeToggle").onclick = () => {
+  document.body.classList.toggle("light-theme");
+};
+
+/* ---------------- START ---------------- */
 connectWS();
