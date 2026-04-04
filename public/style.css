@@ -7,6 +7,11 @@ body {
   overflow: hidden;
 }
 
+.light-theme body {
+  background: #f5f5f5;
+  color: #111;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -32,6 +37,26 @@ body {
   box-shadow: 0 0 10px #00ffcc;
 }
 
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+button {
+  background: #00ffcc;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #000;
+}
+
+.light-theme button {
+  background: #32ff32;
+}
+
 /* MAIN LAYOUT */
 .main-area {
   display: flex;
@@ -47,6 +72,50 @@ body {
   align-items: center;
 }
 
+/* Tower (simple shape) */
+.tower {
+  position: absolute;
+  width: 10px;
+  height: 180px;
+  background: #444;
+  bottom: 20%;
+  border-radius: 4px;
+  box-shadow: 0 0 10px #00ffcc55;
+}
+
+/* Sparks */
+.spark-container {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #00ffcc;
+  border-radius: 50%;
+  animation: spark-fly 0.8s linear forwards;
+  opacity: 0.8;
+}
+
+@keyframes spark-fly {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(calc(var(--dx) * 1px), calc(var(--dy) * 1px)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* Radar */
 .radar {
   width: 420px;
   height: 420px;
@@ -73,7 +142,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* DEVICE BUBBLES */
+/* Device bubbles */
 .device-list {
   list-style: none;
   padding: 0;
@@ -107,6 +176,12 @@ body {
   overflow-y: auto;
 }
 
+.username-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
 .chat-box {
   background: #0f1217;
   border: 1px solid #1f242d;
@@ -122,6 +197,41 @@ body {
   padding: 10px;
   overflow-y: auto;
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-line {
+  padding: 10px 14px;
+  border-radius: 14px;
+  max-width: 80%;
+  width: fit-content;
+  animation: pop 0.2s ease-out;
+}
+
+.chat-you {
+  background: #00ffcc;
+  color: #000;
+  align-self: flex-end;
+}
+
+.chat-peer {
+  background: #0077ff;
+  color: #fff;
+}
+
+.light-theme .chat-you {
+  background: #32ff32;
+}
+
+.light-theme .chat-peer {
+  background: #00aa00;
+}
+
+@keyframes pop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .chat-input {
@@ -137,21 +247,7 @@ body {
   color: #e5e7eb;
 }
 
-.chat-input button {
-  padding: 10px 16px;
-  background: #00ffcc;
-  border: none;
+.light-theme .chat-input input {
+  background: #fff;
   color: #000;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-#sendFileBtn {
-  margin-top: 10px;
-  padding: 10px;
-  background: #00ffcc;
-  border: none;
-  color: #000;
-  cursor: pointer;
-  font-weight: 600;
 }
