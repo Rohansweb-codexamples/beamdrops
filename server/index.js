@@ -1,75 +1,63 @@
-import express from "express";
-import { WebSocketServer } from "ws";
-import http from "http";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
-// WebSocket server
-const wss = new WebSocketServer({ server });
-
-// Store connected clients: id → websocket
-const clients = new Map();
-
-// Broadcast updated peer list to all clients
-function broadcastPeerList() {
-  const list = Array.from(clients.keys());
-  const msg = JSON.stringify({ type: "peers", peers: list });
-
-  for (const ws of clients.values()) {
-    ws.send(msg);
-  }
-}
-
-wss.on("connection", (ws) => {
-  let id = null;
-
-  ws.on("message", (data) => {
-    let msg;
-    try {
-      msg = JSON.parse(data.toString());
-    } catch {
-      return;
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
     }
-
-    if (msg.type === "hello") {
-      id = msg.id;
-      clients.set(id, ws);
-      broadcastPeerList();
-      return;
-    }
-
-    if (msg.type === "signal" && msg.to && clients.has(msg.to)) {
-      const target = clients.get(msg.to);
-      target.send(
-        JSON.stringify({
-          type: "signal",
-          from: id,
-          data: msg.data
-        })
-      );
-    }
-  });
-
-  ws.on("close", () => {
-    if (id && clients.has(id)) {
-      clients.delete(id);
-      broadcastPeerList();
-    }
-  });
 });
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "..", "public")));
+// Serve static files from the current directory
+app.use(express.static(__dirname));
+
+const peers = {};
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    // Join a global room for peer discovery
+    socket.on('join-network', (userData) => {
+        peers[socket.id] = {
+            id: socket.id,
+            name: userData.name,
+            device: userData.device
+        };
+        
+        // Broadcast to everyone that a new peer joined
+        io.emit('peers-update', Object.values(peers));
+    });
+
+    // Handle Signaling for WebRTC
+    socket.on('signal', ({ to, from, signal }) => {
+        io.to(to).emit('signal', { from, signal });
+    });
+
+    // Handle File Transfer Requests
+    socket.on('file-offer', ({ to, from, metadata }) => {
+        io.to(to).emit('file-offer', { from, metadata });
+    });
+
+    socket.on('file-accept', ({ to, from }) => {
+        io.to(to).emit('file-accept', { from });
+    });
+
+    socket.on('file-decline', ({ to, from }) => {
+        io.to(to).emit('file-decline', { from });
+    });
+
+    socket.on('disconnect', () => {
+        delete peers[socket.id];
+        io.emit('peers-update', Object.values(peers));
+        console.log('User disconnected:', socket.id);
+    });
+});
 
 const PORT = process.env.PORT || 3000;
-
-// IMPORTANT: Render requires 0.0.0.0
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`BeamDrop server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Beam Drop server running on port ${PORT}`);
 });
