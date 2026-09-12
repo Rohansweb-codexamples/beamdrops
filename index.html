@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Player</title>
+    <script src="https://socket.io"></script>
+</head>
+<body style="background: #111; color: white; font-family: sans-serif; text-align: center;">
+    <h2>📺 Custom Live Player</h2>
+    <video id="player" autoplay playsinline controls style="width: 100%; max-width: 640px; background: #000; border-radius: 8px;"></video>
+
+    <script>
+        // REPLACE WITH YOUR ACTUAL RENDER URL
+        const socket = io("https://beamdrops.onrender.com/");
+        const video = document.getElementById('player');
+        
+        // Setup MediaSource to reconstruct video segments in the browser engine
+        const mediaSource = new MediaSource();
+        video.src = URL.createObjectURL(mediaSource);
+
+        let sourceBuffer;
+        let queue = [];
+
+        mediaSource.addEventListener('sourceopen', () => {
+            // Must match the exact encoding format emitted by the broadcaster
+            sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs=vp9,opus');
+            
+            sourceBuffer.addEventListener('updateend', () => {
+                if (queue.length > 0 && !sourceBuffer.updating) {
+                    sourceBuffer.appendBuffer(queue.shift());
+                }
+            });
+        });
+
+        // Receive real-time video arrays from the Render relay server
+        socket.on('stream-data', async (arrayBuffer) => {
+            if (sourceBuffer && !sourceBuffer.updating && queue.length === 0) {
+                sourceBuffer.appendBuffer(arrayBuffer);
+            } else {
+                queue.push(arrayBuffer);
+            }
+        });
+    </script>
+</body>
+</html>
