@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Stream Broadcaster</title>
+    <!-- Load Socket.io Client -->
+    <script src="https://socket.io"></script>
+</head>
+<body style="background: #111; color: white; font-family: sans-serif; text-align: center;">
+    <h2>🎥 Live Broadcaster Console</h2>
+    <video id="preview" autoplay muted playsinline style="width: 100%; max-width: 640px; background: #000; border-radius: 8px;"></video>
+    <br><br>
+    <button id="startBtn" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Go Live</button>
+
+    <script>
+        // REPLACE WITH YOUR ACTUAL RENDER URL
+        const socket = io("https://beamdrops.onrender.com/"); 
+        const video = document.getElementById('preview');
+        const startBtn = document.getElementById('startBtn');
+        let mediaRecorder;
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            startBtn.innerText = "Streaming Live...";
+            
+            // 1. Capture webcam and audio
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            video.srcObject = stream;
+
+            // 2. Record the stream in tiny, fast chunks (webm format)
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9,opus' });
+            
+            // 3. Every 100ms, emit the video data chunk straight to your Render server
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    socket.emit('stream-data', event.data);
+                }
+            };
+
+            // Request data every 100 milliseconds for low-latency
+            mediaRecorder.start(100); 
+        });
+    </script>
+</body>
+</html>
